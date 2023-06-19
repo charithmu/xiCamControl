@@ -1,0 +1,24 @@
+################################################################################
+# ximea-script.service
+#
+# This service unit is for testing my systemd startup service
+#
+################################################################################
+# This program should be placed in /usr/local/lib/systemd/system/
+# Create a symlink to it from the /etc/systemd/system directory as below
+# ln -s /usr/local/lib/systemd/system/ximea-script.service
+################################################################################
+
+[Unit]
+
+Description=Runs /usr/local/bin/ximea-script.sh
+
+  
+[Service]
+
+ExecStart=/usr/local/bin/ximea-script.sh
+
+
+[Install]
+
+WantedBy=multi-user.target
