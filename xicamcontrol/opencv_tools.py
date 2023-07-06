@@ -132,6 +132,9 @@ def manual_trigger_preview(capture_thread, width=None, percent=None):
         data = capture_thread.data
         metadata = capture_thread.metadata
 
+        if data is None:
+            continue
+
         if width is not None:
             resized = resize_with_aspect_ratio(data, width)
         elif percent is not None:
@@ -196,6 +199,9 @@ def manual_trigger_save(capture_thread, path):
         data = capture_thread.data
         metadata = capture_thread.metadata
 
+        if data is None:
+            continue
+        
         if metadata is None:
             timestamp = time.time()
         else:

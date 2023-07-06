@@ -23,6 +23,7 @@ class CaptureThread(Thread):
 
     def run(self):
         while self.stop_event.wait(0) is not True:
+            # print("CaptureThread running: trigger:"+ self.cam.get_xicam().get_trigger_source())
             data, metadata = self.cam.get_image_with_metadata_safe()
             if data is None:
                 print("No image available")
@@ -40,6 +41,9 @@ class XimeaCamera:
         """Initialize the camera."""
         self.cam = xiapi.Camera()
         self.img = xiapi.Image()
+
+    def get_xicam(self):
+        return self.cam
 
     def open(self):
         """Open the camera."""

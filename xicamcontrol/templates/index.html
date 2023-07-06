@@ -36,7 +36,7 @@
 
         <div class="ratio ratio-1x1">
           <!-- <video id="cameraFeed" src="" controls></video> -->
-          <img src="{{ url_for('video_feed') }}" width="100%">
+          <img id='image_feed' src="https://placehold.jp/600x600.png" width="100%">
           <!-- <img id="latest-image" src="" alt="Latest image"> -->
           <!-- <img id="webcamImage" src="" alt="Latest Webcam Image" /> -->
         </div>
@@ -98,15 +98,18 @@
     };
 
     const start_capture = () => {
-      startCapture();
+      startCapture(); 
       document.getElementById("startBtn").disabled = true;
       document.getElementById("stopBtn").disabled = false;
+      document.getElementById("image_feed").src = "/video_feed";
+    
     };
 
     const stop_capture = () => {
       stopCapture();
       document.getElementById("startBtn").disabled = false;
       document.getElementById("stopBtn").disabled = true;
+      document.getElementById("image_feed").src = "https://placehold.jp/600x600.png";
     };
 
 //    const imageElement = document.getElementById('latest-image');

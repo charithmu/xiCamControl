@@ -85,7 +85,7 @@ def main(mode):
 
     elif mode == "manual":
         capture_thread.start()
-        ocv_tools.manual_trigger_preview(capture_thread, percent=None)
+        ocv_tools.manual_trigger_preview(capture_thread, percent=25)
         # manul_preview_thread.start()
         # ocv_tools.manual_trigger_preview(cam, percent=resize_percent)
 
