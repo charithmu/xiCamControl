@@ -1,3 +1,5 @@
 xicamcontrol/data/*
 .vscode/*
 xicamcontrol/__pycache__/*
+data/*
+
