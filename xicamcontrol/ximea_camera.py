@@ -1,8 +1,11 @@
 from threading import Thread
 from ximea import xiapi
- 
+import logger_tools
+
+
 class ImageMetadata:
     """A class to hold metadata for a single image."""
+
     frame_id = 0
     timestamp = 0
     gain = -1
@@ -11,28 +14,39 @@ class ImageMetadata:
     height = 0
     img_format = ""
 
-#class used as a thread target which calls the camera's get_image_with_metadata_safe() method
-#and saves it to a variable
+
+# class used as a thread target which calls the camera's get_image_with_metadata_safe() method
+# and saves it to a variable
 class CaptureThread(Thread):
-    def __init__(self, cam, stop_event):
+    def __init__(self, cam, stop_event, lock):
         Thread.__init__(self)
         self.cam = cam
         self.data = None
         self.metadata = None
         self.stop_event = stop_event
+        self.lock = lock
+        self.logger = logger_tools.get_logger(self.__class__.__name__)
 
     def run(self):
+        self.logger.debug("CaptureThread started. Running until stop event is set.")
+
         while self.stop_event.wait(0) is not True:
             # print("CaptureThread running: trigger:"+ self.cam.get_xicam().get_trigger_source())
             data, metadata = self.cam.get_image_with_metadata_safe()
             if data is None:
-                print("No image available")
+                self.logger.warning("No image available")
                 continue
-            self.data = data
-            self.metadata = metadata
+            with self.lock:
+                self.data = data
+                self.metadata = metadata
+            # self.logger.debug("CaptureThread: image acquired")
+            # self.logger.debug(self.data.shape)
+
+        self.logger.debug("CaptureThread finished. Exiting with stop event.")
 
     def stop(self):
         self.stop_event.set()
+
 
 class XimeaCamera:
     """A class to control a Ximea camera."""
@@ -41,28 +55,29 @@ class XimeaCamera:
         """Initialize the camera."""
         self.cam = xiapi.Camera()
         self.img = xiapi.Image()
+        self.logger = logger_tools.get_logger(self.__class__.__name__)
 
     def get_xicam(self):
         return self.cam
 
     def open(self):
         """Open the camera."""
-        print("Opening camera...")
+        self.logger.info("Opening camera...")
         self.cam.open_device()
 
     def close(self):
         """Close the camera."""
-        print("Closing camera...")
+        self.logger.info("Closing camera...")
         self.cam.close_device()
 
     def start_acquisition(self):
         """Start data acquisition."""
-        print("Starting acquisition...")
+        self.logger.info("Starting acquisition...")
         self.cam.start_acquisition()
 
     def stop_acquisition(self):
         """Stop data acquisition."""
-        print("Stopping acquisition...")
+        self.logger.info("Stopping acquisition...")
         self.cam.stop_acquisition()
 
     def get_image(self):
@@ -75,6 +90,7 @@ class XimeaCamera:
         try:
             return self.get_image()
         except:
+            self.logger.warning("Failed to get image")
             return None
 
     def get_image_delayed(self, skipped_frames=50):
@@ -102,12 +118,13 @@ class XimeaCamera:
         metadata.img_format = self.img.frm
 
         return data, metadata
-    
+
     # try to get the image with metadata, gracefully return None if it fails
     def get_image_with_metadata_safe(self):
         try:
             return self.get_image_with_metadata()
         except:
+            self.logger.warning("Failed to get image with metadata")
             return None, None
 
     def get_image_with_metadata_delayed(self, skipped_frames=50):
@@ -124,7 +141,7 @@ class XimeaCamera:
 
     def configure_camera(self, manual=False):
         """Configure the camera with the necessary parameters."""
-        print("Configuring camera...")
+        self.logger.info("Configuring camera...")
         self.cam.set_imgdataformat("XI_RGB24")
         self.cam.enable_auto_wb()
         self.cam.enable_aeag()
@@ -138,10 +155,10 @@ class XimeaCamera:
             self.cam.set_trigger_overlap("XI_TRG_OVERLAP_OFF")
             self.cam.set_gpi_selector("XI_GPI_PORT1")
             self.cam.set_gpi_mode("XI_GPI_OFF")
-            print("Configured for continoues triggger...")
+            self.logger.info("Configured for continoues triggger...")
         else:
             self.cam.set_gpi_selector("XI_GPI_PORT1")
-            self.cam.set_gpi_mode("XI_GPI_TRIGGER") 
+            self.cam.set_gpi_mode("XI_GPI_TRIGGER")
             self.cam.set_trigger_source("XI_TRG_EDGE_RISING")
             self.cam.set_trigger_selector("XI_TRG_SEL_FRAME_START")
             # self.cam.set_trigger_overlap("XI_TRG_OVERLAP_OFF")
@@ -149,8 +166,7 @@ class XimeaCamera:
             self.cam.set_dbnc_t0(100)
             self.cam.set_dbnc_t1(50)
             # self.cam.set_dbnc_pol(1)
-            print("Configured for manual hardware triggger...")
-
+            self.logger.info("Configured for manual hardware triggger...")
 
     # def configure_camera_settings(cam):
 
