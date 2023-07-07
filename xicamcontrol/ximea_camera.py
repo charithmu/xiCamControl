@@ -15,9 +15,9 @@ class ImageMetadata:
     img_format = ""
 
 
-# class used as a thread target which calls the camera's get_image_with_metadata_safe() method
-# and saves it to a variable
 class CaptureThread(Thread):
+    """A class to capture images from a camera in a thread."""
+
     def __init__(self, cam, stop_event, lock):
         Thread.__init__(self)
         self.cam = cam
@@ -146,7 +146,7 @@ class XimeaCamera:
         self.cam.enable_auto_wb()
         self.cam.enable_aeag()
         self.cam.set_exp_priority(0.5)
-        self.cam.set_aeag_level(30)
+        self.cam.set_aeag_level(50)
         # self.cam.set_ae_max_limit(200000)
         # self.cam.set_ag_max_limit(12.0)
         if not manual:
