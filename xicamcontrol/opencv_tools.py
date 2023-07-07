@@ -1,8 +1,5 @@
+import cv2, os, time, datetime
 from threading import Thread
-import cv2
-import os
-import time
-import datetime
 import logger_tools
 
 logger = logger_tools.get_logger(__name__)
@@ -200,7 +197,7 @@ def manual_trigger_save(capture_thread, path):
     os.makedirs(save_dir)
     logger.info("Using folder: " + os.path.abspath(save_dir))
 
-    last_timestamp = None
+    last_timestamp = time.time()
 
     while capture_thread.is_alive():
         data = capture_thread.data

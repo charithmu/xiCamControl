@@ -1,9 +1,7 @@
-import sys, signal, logging, traceback, os, datetime
-import argparse
+import signal, time, argparse
+from threading import Event, Lock
 import opencv_tools as ocv_tools
 import ximea_camera as xi_cam
-
-from threading import Thread, Event, Lock
 import logger_tools
 
 
@@ -14,6 +12,7 @@ class CameraController:
         self.lock = Lock()
         self.capture_started = False
         self.save = False
+        self.manual = False
         self.save_dir = "data"
         self.logger = logger_tools.get_logger(self.__class__.__name__)
 
@@ -27,6 +26,8 @@ class CameraController:
             self.cam.open()
             self.cam.configure_camera(manual)
             self.save = save
+            self.manual = manual
+            self.manual_timestamp = time.time()
             self.save_dir = save_dir
             self.cam.start_acquisition()
             self.stop_event.clear()
@@ -62,15 +63,27 @@ class CameraController:
                 data = self.capture_thread.data
                 metadata = self.capture_thread.metadata
 
-            if data is None:
+            if data is None or metadata is None:
                 # self.logger.warning("No image available")
                 return None
             else:
-                if self.save:
-                    # self.logger.debug("Saving image to folder: " + os.path.abspath(self.save_dir))
-                    ocv_tools.save_image(data, metadata, self.save_dir)
+                if self.manual:
+                    timestamp = metadata.timestamp
+                    if timestamp != self.manual_timestamp:
+                        self.manual_timestamp = metadata.timestamp
+                        if self.save:
+                            # self.logger.debug("Saving image to folder: " + os.path.abspath(self.save_dir))
+                            ocv_tools.save_image(data, metadata, self.save_dir)
 
-                return ocv_tools.resize_with_aspect_ratio(data, 600)
+                        return ocv_tools.resize_with_aspect_ratio(data, 600)
+                    else:
+                        return None
+                else:
+                    if self.save:
+                        # self.logger.debug("Saving image to folder: " + os.path.abspath(self.save_dir))
+                        ocv_tools.save_image(data, metadata, self.save_dir)
+
+                    return ocv_tools.resize_with_aspect_ratio(data, 600)
         else:
             return None
 

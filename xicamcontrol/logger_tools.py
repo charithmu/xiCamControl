@@ -1,4 +1,4 @@
-import sys, logging, traceback
+import logging
 from colorlog import ColoredFormatter
 
 

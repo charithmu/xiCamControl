@@ -41,26 +41,23 @@
       <!-- <div class="row"> -->
 
       <div class="row px-2 mb-4">
-
         <div class="mb-2 mx-auto ratio ratio-1x1 border border-warning">
           <!-- <video id="cameraFeed" src="" controls></video> -->
           <img id="image_feed" src="static/preview.jpg" width="100%" />
           <!-- <img id="latest-image" src="" alt="Latest image"> -->
           <!-- <img id="webcamImage" src="" alt="Latest Webcam Image" /> -->
         </div>
-        <div class="mb-5">
+        <div class="mb-3">
           <button class="btn btn-md btn-warning" id="stopBtn" onclick="save()">Save</button>
         </div>
-
       </div>
 
       <div class="row">
-
         <div class="mb-4 mx-auto">
           <div class="btn-group" role="group2" aria-label="Basic radio toggle button group">
             <input type="radio" class="btn-check" name="btnradio2" id="btnradio22" autocomplete="off" checked />
             <label class="btn btn-outline-primary" for="btnradio22">Preview Only</label>
-            
+
             <input type="radio" class="btn-check" name="btnradio2" id="btnradio21" autocomplete="off" />
             <label class="btn btn-outline-primary" for="btnradio21">Save to Disk</label>
           </div>
@@ -76,13 +73,11 @@
           </div>
         </div>
 
-        <div class="mb-4 mx-auto">
+        <div class="mb-5 pb-5 mx-auto">
           <button class="btn btn-md btn-success" id="startBtn" onclick="start_capture()">Start Capture</button>
           <button class="btn btn-md btn-danger" id="stopBtn" onclick="stop_capture()">Stop Capture</button>
         </div>
-
       </div>
-
     </div>
 
     <footer class="footer mt-auto py-3 bg-dark fixed-bottom">
@@ -90,6 +85,5 @@
         <span id="status-msg" class="text-light">Ready.</span>
       </div>
     </footer>
-
   </body>
 </html>

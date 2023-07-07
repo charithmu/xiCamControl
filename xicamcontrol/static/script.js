@@ -1,4 +1,3 @@
-
 async function startCapture() {
   let manaul = document.getElementById("btnradio32").checked;
   let save = document.getElementById("btnradio21").checked;

@@ -1,7 +1,6 @@
 from flask import Flask, render_template, Response, request
 import cv2, os, datetime
 import cam_control as cam_control
-import opencv_tools
 import logger_tools
 
 logger = logger_tools.get_logger(__name__)
@@ -25,6 +24,9 @@ def gen_frames():
             yield (
                 b"--frame\r\n" b"Content-Type: image/jpeg\r\n\r\n" + frame + b"\r\n"
             )  # concat frame one by one and show result
+            yield (
+                b"--frame\r\n" b"Content-Type: image/jpeg\r\n\r\n" + frame + b"\r\n"
+            )  # send same frame twice to fix the problem of alwasys showing the previous frame
 
 
 # main page
