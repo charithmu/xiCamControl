@@ -1,0 +1,12 @@
+
+# Append these lines to /etc/security/limits.conf
+# to allow non-root users to run realtime tasks:
+# (you may need to log out and log back in for this to take effect)
+# cat realtime-limits.txt | sudo tee -a /etc/security/limits.conf
+
+*               -       rtprio          0
+@realtime       -       rtprio          81
+*               -       nice            0
+@realtime       -       nice            -16
+
+# End of file

@@ -1,0 +1,31 @@
+# Increase the USB Buffer Size in Linux by
+# setting usbcore.usbfs_memory_mb to Unlimited (by setting to 0)
+# this allows for higher throughput on USB devices
+
+# current allocation can be checked with
+cat /sys/module/usbcore/parameters/usbfs_memory_mb
+
+# modify the allocation by
+
+# For current terminal (temporarily)
+echo 0 | sudo tee /sys/module/usbcore/parameters/usbfs_memory_mb
+
+# Linux at boot with grub (permanent)
+# Modify /etc/default/grub to include GRUB_CMDLINE_LINUX_DEFAULT="quiet splash usbcore.usbfs_memory_mb=0"
+
+sudo sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="quiet splash"/GRUB_CMDLINE_LINUX_DEFAULT="quiet splash usbcore.usbfs_memory_mb=1000"/g' /etc/default/grub
+sudo update-grub
+
+# Raspberry Pi (permanent)
+# Modify /boot/cmdline.txt to include usbcore.usbfs_memory_mb=0
+sed -i '$ s/$/usbcore.usbfs_memory_mb=0/' /boot/cmdline.txt
+sudo reboot
+
+# Docker
+# Modify /etc/default/docker ???
+
+# WSL2
+# Modify /etc/wsl.conf to include ???
+# [automount] options = "metadata,umask=22,fmask=11,uid=1000,gid=1000,case=off,iocharset=utf8,shortname=winnt,errors=remount-ro,uid=1000,gid=1000,umask=22,metadata=off,usbfs_memory_mb=0"
+# 
+
