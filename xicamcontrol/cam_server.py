@@ -13,7 +13,7 @@ camera = cam_control.CameraController()
 def gen_frames():
     while camera.capture_started:
         # logger.debug("gen_frames called")
-        data = camera.get_image()
+        data = camera.retrive_image()
         if data is None:
             continue
         else:

@@ -9,7 +9,6 @@ class CameraController:
     def __init__(self):
         self.cam = xi_cam.XimeaCamera()
         self.stop_event = Event()
-        self.lock = Lock()
         self.capture_started = False
         self.save = False
         self.manual = False
@@ -20,10 +19,10 @@ class CameraController:
         self.logger.debug(f"Cam Controller start called: {manual}, {save}")
 
         try:
-            num = self.cam.get_xicam().get_number_devices()
+            num = self.cam.get_xicam_instance().get_number_devices()
             self.logger.debug("Number of cameras: " + str(num))
 
-            self.cam.open()
+            self.cam.open_device()
             self.cam.configure_camera(manual)
             self.save = save
             self.manual = manual
@@ -31,11 +30,9 @@ class CameraController:
             self.save_dir = save_dir
             self.cam.start_acquisition()
             self.stop_event.clear()
-            self.capture_thread = xi_cam.CaptureThread(
-                self.cam, self.stop_event, self.lock
-            )
-            self.capture_thread.start()
+            self.cam.start_capture_thread(self.stop_event)
             self.capture_started = True
+
             return True
 
         except Exception:
@@ -45,9 +42,10 @@ class CameraController:
     def stop_capture(self):
         self.logger.debug("Cam Controller stop called")
         try:
+            self.cam.stop_capture_thread()
             self.stop_event.set()
             self.cam.stop_acquisition()
-            self.cam.close()
+            self.cam.close_device()
             self.capture_started = False
             self.save = False
             return True
@@ -56,35 +54,35 @@ class CameraController:
             self.logger.error("Camera cannot be closed!", exc_info=True)
             return False
 
-    def get_image(self):
+    def retrive_image(self):
         # self.logger.debug("Cam Controller get_image called")
         if self.capture_started:
-            with self.lock:
-                data = self.capture_thread.data
-                metadata = self.capture_thread.metadata
+            image = self.cam.get_image_from_buffer()
 
-            if data is None or metadata is None:
-                # self.logger.warning("No image available")
+            if image.data is None or image.metadata is None:
+                self.logger.warning("No image available")
                 return None
+            
             else:
                 if self.manual:
-                    timestamp = metadata.timestamp
+                    timestamp = image.metadata.timestamp
                     if timestamp != self.manual_timestamp:
-                        self.manual_timestamp = metadata.timestamp
+                        self.manual_timestamp = image.metadata.timestamp
                         if self.save:
                             # self.logger.debug("Saving image to folder: " + os.path.abspath(self.save_dir))
-                            ocv_tools.save_image(data, metadata, self.save_dir)
+                            ocv_tools.save_image(image.data, image.metadata, self.save_dir)
 
-                        return ocv_tools.resize_with_aspect_ratio(data, 600)
+                        return ocv_tools.resize_with_aspect_ratio(image.data, 600)
                     else:
                         return None
                 else:
                     if self.save:
                         # self.logger.debug("Saving image to folder: " + os.path.abspath(self.save_dir))
-                        ocv_tools.save_image(data, metadata, self.save_dir)
+                        ocv_tools.save_image(image.data, image.metadata, self.save_dir)
 
-                    return ocv_tools.resize_with_aspect_ratio(data, 600)
+                    return ocv_tools.resize_with_aspect_ratio(image.data, 600)
         else:
+            self.logger.warning("Capture not started")
             return None
 
 
@@ -92,7 +90,7 @@ def main(mode, timer=None):
     global stop_event
 
     cam = xi_cam.XimeaCamera()
-    cam.open()
+    cam.open_device()
 
     if mode == "manual" or mode == "output":
         cam.configure_camera(manual=True)
@@ -103,54 +101,50 @@ def main(mode, timer=None):
 
     resize_percent = 25
     skip_frames = 50
+    save_dir = "data"
 
-    # manul_preview_thread = Thread(target=ocv_tools.manual_trigger_preview, args=(stop_event, cam, None, resize_percent))
-    # manual_save_thread = Thread(target=ocv_tools.manual_trigger_save, args=(stop_event, cam, "data"))
-
-    data_lock = Lock()
-    capture_thread = xi_cam.CaptureThread(cam, stop_event, data_lock)
+    # data_lock = Lock()
+    # capture_thread = xi_cam.CaptureThread(cam, stop_event, data_lock)
     # capture_thread = ocv_tools.CaptureThreadWebCam(stop_event)
 
     # try:
     if mode == "image":
-        data, metadata = cam.get_image_with_metadata_delayed(skip_frames)
-        ocv_tools.show_image(data, metadata, percent=resize_percent)
+        image = cam.get_image_from_device(skip_frames)
+        ocv_tools.show_image(image, percent=resize_percent)
 
     elif mode == "save":
-        data, metadata = cam.get_image_with_metadata_delayed(skip_frames)
-        ocv_tools.save_image(data, metadata, "data")
+        image = cam.get_image_from_device(skip_frames)
+        ocv_tools.save_image(image, save_dir)
 
     elif mode == "video":
+        cam.start_capture_thread(stop_event)
         ocv_tools.stream_video(cam, percent=resize_percent)
+        cam.stop_capture_thread()
 
     elif mode == "manual":
-        capture_thread.start()
-        ocv_tools.manual_trigger_preview(capture_thread, percent=25)
-        # manul_preview_thread.start()
-        # ocv_tools.manual_trigger_preview(cam, percent=resize_percent)
+        cam.start_capture_thread(stop_event)
+        ocv_tools.manual_trigger_preview(cam, percent=25)
+        cam.stop_capture_thread()
 
     elif mode == "output":
-        capture_thread.start()
-        ocv_tools.manual_trigger_save(capture_thread, "data")
-        # manual_save_thread.start()
-        # ocv_tools.manual_trigger_save(cam, "data")
+        cam.start_capture_thread(stop_event)
+        ocv_tools.manual_trigger_save(cam, save_dir)
+        cam.stop_capture_thread()
 
     elif mode == "timer":
-        capture_thread.start()
-        ocv_tools.capture_with_timer(capture_thread, timer, "data", percent=25)
+        cam.start_capture_thread(stop_event)
+        ocv_tools.capture_with_timer(cam, timer, save_dir, percent=25)
+        cam.stop_capture_thread()
 
     # except KeyboardInterrupt:
     #     print("Keyboard Interrupt. Exiting in main.")
     #     stop_event.set()
 
-    # if manul_preview_thread.is_alive():
-    #     manul_preview_thread.join()
-
-    # if manual_save_thread.is_alive():
-    #     manual_save_thread.join()
+    cam.stop_event.set()
 
     cam.stop_acquisition()
-    cam.close()
+    cam.close_device()
+
     logger.debug("Exiting main.")
 
 

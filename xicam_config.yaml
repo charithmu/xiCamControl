@@ -1,0 +1,41 @@
+---
+
+BASIC:
+  # XI_PRM_EXPOSURE:                          #Exposure time in microseconds
+  XI_PRM_IMAGE_DATA_FORMAT: XI_RGB24                #Output data format.
+
+IMAGE:
+  # XI_PRM_HORIZONTAL_FLIP:  #Horizontal flip enable
+  # XI_PRM_VERTICAL_FLIP: #Vertical flip enable
+
+AEAG:
+  XI_PRM_AEAG: True                              #Automatic exposure/gain
+  XI_PRM_EXP_PRIORITY: 0.5                      #Exposure priority (0.8 - exposure 80%, gain 20%).
+  # XI_PRM_AG_MAX_LIMIT:                      #Maximum limit of gain in AEAG procedure
+  # XI_PRM_AE_MAX_LIMIT:                      #Maximum time (us) used for exposure in AEAG procedure
+  XI_PRM_AEAG_LEVEL: 50                        #Average intensity of output signal AEAG should achieve(in %)
+
+WB:
+  XI_PRM_AUTO_WB: True                           #Automatic white balance
+  # XI_PRM_MANUAL_WB:                         #Calculates White Balance(xiGetImage function must be called)
+  # XI_PRM_WB_KR:                             #White balance red coefficient
+  # XI_PRM_WB_KG:                             #White balance green coefficient
+  # XI_PRM_WB_KB:                             #White balance blue coefficient
+
+TRIGGER:
+  XI_PRM_TRG_SOURCE: XI_TRG_OFF #XI_TRG_EDGE_RISING #Defines source of trigger.
+  # XI_PRM_TRG_SOFTWARE:    #Generates an internal trigger. XI_PRM_TRG_SOURCE must be set to TRG_SOFTWARE.
+  XI_PRM_TRG_SELECTOR: XI_TRG_SEL_FRAME_START    #Selects the type of trigger.
+  XI_PRM_TRG_OVERLAP: XI_TRG_OVERLAP_OFF   #The mode of Trigger Overlap. This influences of trigger acception/rejection policy
+
+GPIO:
+  XI_PRM_GPI_SELECTOR: XI_GPI_PORT1     #Selects GPI
+  XI_PRM_GPI_MODE: XI_GPI_OFF #XI_GPI_TRIGGER    #Defines GPI functionality
+  # XI_PRM_GPI_LEVEL:     #GPI level
+  # XI_PRM_GPI_LEVEL_AT_IMAGE_EXP_START:     #GPI Level at image exposure start
+  # XI_PRM_GPI_LEVEL_AT_IMAGE_EXP_END:     #GPI Level at image exposure end
+  XI_PRM_GPO_SELECTOR:     #Selects GPO
+  # XI_PRM_DEBOUNCE_EN:     #Enable/Disable debounce to selected GPI
+  XI_PRM_DEBOUNCE_T0: 100     #Debounce time (x * 10us)
+  XI_PRM_DEBOUNCE_T1: 50    #Debounce time (x * 10us)
+  # XI_PRM_DEBOUNCE_POL:     #Debounce polarity (pol: 1 t0 - falling edge, t1 - rising edge)

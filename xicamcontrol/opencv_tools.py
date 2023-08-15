@@ -1,9 +1,10 @@
+# opencv_tools.py
+
 import cv2, os, time, datetime
 from threading import Thread
 import logger_tools
 
 logger = logger_tools.get_logger(__name__)
-
 
 def resize_with_aspect_ratio(image, width):
     """Resize image to a given width keeping the aspect ratio"""
@@ -74,56 +75,65 @@ def stream_video(cam, width=None, percent=None):
         logger.info("Starting video. Press CTRL+C to exit.")
 
         while True:
-            data, metadata = cam.get_image_with_metadata()
+            if cam.capture_thread is not None and cam.capture_thread.is_alive():
+                    
+                image = cam.get_image_from_buffer()
 
-            if width is not None:
-                resized = resize_with_aspect_ratio(data, width)
-            elif percent is not None:
-                resized = resize_with_percent(data, percent)
+                if image is None or image.data is None:
+                    continue
+
+                if width is not None:
+                    resized = resize_with_aspect_ratio(image.data, width)
+                elif percent is not None:
+                    resized = resize_with_percent(image.data, percent)
+                else:
+                    resized = image.data
+
+                text1 = "FrameID:{:f}, Timestamp:{:f} s".format(
+                    image.metadata.frame_id, image.metadata.timestamp
+                )
+                text2 = "Gain:{:5.1f} dB, Exp:{:5.1f} us".format(
+                    image.metadata.gain, image.metadata.exposure
+                )
+                cv2.putText(
+                    resized,
+                    text1,
+                    (10, 100),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    1,
+                    (255, 255, 255),
+                    2,
+                )
+                cv2.putText(
+                    resized,
+                    text2,
+                    (10, 150),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    1,
+                    (255, 255, 255),
+                    2,
+                )
+
+                cv2.namedWindow("Preview")
+                cv2.imshow("Preview", resized)
+
+                keyCode = cv2.waitKey(1)
+                if keyCode != -1:
+                    break
+                win_prop = cv2.getWindowProperty("Preview", cv2.WND_PROP_VISIBLE)
+                if win_prop <= 0:
+                    break
+            
             else:
-                resized = data
+                logger.warning("Capture not started. Waiting for the capture thread to start.")
 
-            text1 = "FrameID:{:f}, Timestamp:{:f} s".format(
-                metadata.frame_id, metadata.timestamp
-            )
-            text2 = "Gain:{:5.1f} dB, Exp:{:5.1f} us".format(
-                metadata.gain, metadata.exposure
-            )
-            cv2.putText(
-                resized,
-                text1,
-                (10, 100),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                1,
-                (255, 255, 255),
-                2,
-            )
-            cv2.putText(
-                resized,
-                text2,
-                (10, 150),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                1,
-                (255, 255, 255),
-                2,
-            )
-
-            cv2.namedWindow("Preview")
-            cv2.imshow("Preview", resized)
-
-            keyCode = cv2.waitKey(1)
-            if keyCode != -1:
-                break
-            win_prop = cv2.getWindowProperty("Preview", cv2.WND_PROP_VISIBLE)
-            if win_prop <= 0:
-                break
         cv2.destroyAllWindows()
 
     except KeyboardInterrupt:
         cv2.destroyAllWindows()
 
 
-def manual_trigger_preview(capture_thread, width=None, percent=None):
+def manual_trigger_preview(cam, width=None, percent=None):
     """Show a video stream. Press CTRL+C to exit.
     Intended to use as a Thread target.
     """
@@ -182,7 +192,6 @@ def manual_trigger_preview(capture_thread, width=None, percent=None):
         if win_prop <= 0:
             break
 
-    capture_thread.stop()
     cv2.destroyAllWindows()
     logger.debug("Manual trigger thread has finished.")
 
